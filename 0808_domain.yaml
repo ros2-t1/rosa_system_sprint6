@@ -1,0 +1,318 @@
+# really_correct_domain_bridge.yaml
+
+topics:
+
+  # ==================== DP_03 TF 리맵 (꼭 필요) ====================
+  
+  # 로봇의 /tf → 관제의 /DP_03/tf
+  tf:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/tf
+
+  # 로봇의 /tf_static → 관제의 /DP_03/tf_static  
+  tf_static:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/tf_static
+
+  # ==================== 나머지 토픽들 (리맵 없이 도메인 브리지) ====================
+  
+  # DP_03 상태 토픽들 (로봇 → 관제)
+
+  pinky_battery_present:
+    type: std_msgs/msg/Float32
+    from_domain: 13  
+    to_domain: 20
+    remap: DP_03/battery_present 
+
+  DP_03/initialpose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 20  
+    to_domain: 13  
+
+  DP_03/amcl_pose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 13
+    to_domain: 20
+    remap: plan
+  
+  DP_03/local_plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 13
+    to_domain: 20
+    remap: local_plan
+
+  DP_03/odom:
+    type: nav_msgs/msg/Odometry
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/scan:
+    type: sensor_msgs/msg/LaserScan
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/particle_cloud:
+    type: nav2_msgs/msg/ParticleCloud
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/robot_description:
+    type: std_msgs/msg/String
+    from_domain: 13
+    to_domain: 20
+
+  # 제어 토픽 (관제 → 로봇) - 필요할 때만
+  DP_03/cmd_vel:
+    type: geometry_msgs/msg/Twist
+    from_domain: 20
+    to_domain: 13
+    remap: cmd_vel
+
+  DP_03/goal_pose:
+    type: geometry_msgs/msg/PoseStamped
+    from_domain: 20
+    to_domain: 13
+    remap: goal_pose
+
+   # ==================== DP_08 TF 리맵 (꼭 필요) ====================
+  
+  # 로봇의 /tf → 관제의 /DP_08/tf
+  tf:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 18
+    to_domain: 20
+    remap: DP_08/tf
+
+  # 로봇의 /tf_static → 관제의 /DP_08/tf_static  
+  tf_static:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 18
+    to_domain: 20
+    remap: DP_08/tf_static
+
+  # ==================== 나머지 토픽들 (리맵 없이 도메인 브리지) ====================
+  
+  # DP_08 상태 토픽들 (로봇 → 관제)\
+
+  pinky_battery_present:
+    type: std_msgs/msg/Float32
+    from_domain: 18  
+    to_domain: 20
+    remap: DP_08/battery_present
+
+  DP_08/initialpose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 20  
+    to_domain: 18  
+
+  DP_08/amcl_pose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 18
+    to_domain: 20
+
+  DP_08/plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 18
+    to_domain: 20
+    remap: plan
+  
+  DP_08/local_plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 18
+    to_domain: 20
+    remap: local_plan
+
+  DP_08/odom:
+    type: nav_msgs/msg/Odometry
+    from_domain: 18
+    to_domain: 20
+
+  DP_08/scan:
+    type: sensor_msgs/msg/LaserScan
+    from_domain: 18
+    to_domain: 20
+
+  DP_08/particle_cloud:
+    type: nav2_msgs/msg/ParticleCloud
+    from_domain: 18
+    to_domain: 20
+
+  DP_08/robot_description:
+    type: std_msgs/msg/String
+    from_domain: 18
+    to_domain: 20
+
+  # 제어 토픽 (관제 → 로봇) - 필요할 때만
+  DP_08/cmd_vel:
+    type: geometry_msgs/msg/Twist
+    from_domain: 20
+    to_domain: 18
+    remap: cmd_vel
+
+  DP_08/goal_pose:
+    type: geometry_msgs/msg/PoseStamped
+    from_domain: 20
+    to_domain: 18
+    remap: goal_pose
+
+  # ==================== DP_09 TF 리맵 (꼭 필요) ====================
+  
+  # 로봇의 /tf → 관제의 /DP_09/tf
+  tf:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 19
+    to_domain: 20
+    remap: DP_09/tf
+
+  # 로봇의 /tf_static → 관제의 /DP_09/tf_static  
+  tf_static:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 19
+    to_domain: 20
+    remap: DP_09/tf_static
+
+  # ==================== 나머지 토픽들 (리맵 없이 도메인 브리지) ====================
+  
+  # DP_09 상태 토픽들 (로봇 → 관제)
+
+  pinky_battery_present:
+    type: std_msgs/msg/Float32
+    from_domain: 19  
+    to_domain: 20
+    remap: DP_09/battery_present
+
+  DP_09/initialpose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 20  
+    to_domain: 19  
+
+  DP_09/amcl_pose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 19
+    to_domain: 20
+
+  DP_09/plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 19
+    to_domain: 20
+    remap: plan
+  
+  DP_09/local_plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 19
+    to_domain: 20
+    remap: local_plan
+
+  DP_09/odom:
+    type: nav_msgs/msg/Odometry
+    from_domain: 19
+    to_domain: 20
+
+  DP_09/scan:
+    type: sensor_msgs/msg/LaserScan
+    from_domain: 19
+    to_domain: 20
+
+  DP_09/particle_cloud:
+    type: nav2_msgs/msg/ParticleCloud
+    from_domain: 19
+    to_domain: 20
+
+  DP_09/robot_description:
+    type: std_msgs/msg/String
+    from_domain: 19
+    to_domain: 20
+
+  # 제어 토픽 (관제 → 로봇) - 필요할 때만
+  DP_09/cmd_vel:
+    type: geometry_msgs/msg/Twist
+    from_domain: 20
+    to_domain: 19
+    remap: cmd_vel
+
+  DP_09/goal_pose:
+    type: geometry_msgs/msg/PoseStamped
+    from_domain: 20
+    to_domain: 19
+    remap: goal_pose
+
+  # Map 공유 (관제 → 모든 로봇)
+  map:
+    type: nav_msgs/msg/OccupancyGrid
+    from_domain: 20
+    to_domain: 13
+
+  map:
+    type: nav_msgs/msg/OccupancyGrid
+    from_domain: 20
+    to_domain: 18
+
+  map:
+    type: nav_msgs/msg/OccupancyGrid
+    from_domain: 20
+    to_domain: 19
+
+  # ==================== 로봇팔 (HANA Arm) 연동 (새 이름으로 수정됨) ====================
+
+  # 서버(20) -> 로봇팔(14): 픽업 요청
+  robot_arm/user_cmd:
+    type: std_msgs/msg/Int32
+    from_domain: 20
+    to_domain: 14
+
+  # 로봇팔(14) -> 서버(20): 배치 완료 응답
+  robot_arm/status:
+    type: std_msgs/msg/String
+    from_domain: 14
+    to_domain: 20
+
+  # DP_03 /waypoints
+  waypoints:
+    type: visualization_msgs/msg/MarkerArray
+    from_domain: 20
+    to_domain: 13
+    remap: DP_03/waypoints
+
+  # DP_03 FollowWaypoints Action Topics (네임스페이스 추가)
+  follow_waypoints/_action/status:
+    type: action_msgs/msg/GoalStatusArray
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/follow_waypoints/_action/status
+
+  follow_waypoints/_action/feedback:
+    type: nav2_msgs/action/FollowWaypoints_FeedbackMessage
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/follow_waypoints/_action/feedback
+
+# ==================== SERVICES (DP_03 FollowWaypoints 액션) ====================
+services:
+  # 관제(20) DP_03/follow_waypoints -> 로봇(13) follow_waypoints  
+  DP_03/follow_waypoints/_action/send_goal:
+    type: action_msgs/srv/SendGoal
+    from_domain: 20
+    to_domain: 13
+    remap: follow_waypoints/_action/send_goal
+
+  DP_03/follow_waypoints/_action/cancel_goal:
+    type: action_msgs/srv/CancelGoal
+    from_domain: 20
+    to_domain: 13
+    remap: follow_waypoints/_action/cancel_goal
+
+  DP_03/follow_waypoints/_action/get_result:
+    type: action_msgs/srv/GetResult
+    from_domain: 20
+    to_domain: 13
+    remap: follow_waypoints/_action/get_result
+

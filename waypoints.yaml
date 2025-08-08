@@ -1,0 +1,71 @@
+# waypoints.yaml (단방향 고속도로 적용 최종 버전)
+
+# [상행선] 초록색 경로: 아래에서 위로 갈 때 사용
+highway_up:
+  - pose:
+      position: {x: 0.25, y: -0.8, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - pose:
+      position: {x: 0.25, y: -0.4, z: 0.0} # 픽업대 근처
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - pose:
+      position: {x: 0.25, y: 0.25, z: 0.0} # 왼쪽/오른쪽 길 교차로
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - pose:
+      position: {x: 0.25, y: 0.9, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+
+# [하행선] 파란색 경로: 위에서 아래로 갈 때 사용
+highway_down:
+  - pose:
+      position: {x: 0.05, y: 0.9, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - pose:
+      position: {x: 0.05, y: 0.25, z: 0.0} # 왼쪽/오른쪽 길 교차로
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - pose:
+      position: {x: 0.05, y: -0.4, z: 0.0} # 픽업대 근처
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - pose:
+      position: {x: 0.05, y: -0.8, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+
+
+# 빨간색 점: 최종 목적지들 (경로의 끝점으로 사용)
+destinations:
+  - name: "왼쪽방"
+    pose:
+      position: {x: 0.0, y: 0.9, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "오른쪽방"
+    pose:
+      position: {x: 0.4, y: 0.9, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "픽업대"
+    pose:
+      position: {x: 0.15, y: -0.4, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "픽업대기장소"
+    pose:
+      position: {x: -0.2, y: -0.4, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "3번 충전소"
+    pose:
+      position: {x: -0.2, y: 0.0, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "8번 충전소"
+    pose:
+      position: {x: -0.2, y: 0.25, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "9번 충전소"
+    pose:
+      position: {x: -0.2, y: 0.5, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "면회실"
+    pose:
+      position: {x: 0.5, y: 0.0, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
+  - name: "출입구"
+    pose:
+      position: {x: 0.5, y: 0.2, z: 0.0}
+      orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
