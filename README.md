@@ -217,3 +217,8 @@ python3 /home/addinedu/jeong/multi_robot_project/0808_system/main.py --input-onl
 명령이 내려지면 시스템은 최적의 로봇을 판단하여 작업을 할당하고, **터미널 5 (`--status-only`)** 의 GUI와 **터미널 4 (RViz2)** 에 모든 진행 상황이 실시간으로 표시됩니다.
 
 ---
+
+
+
+******* waypoint 넣으려고 하다가 오류떠서 일단 다 빼고 테스트했어요!!!! 으아아악
+다음에 해보겠습니다!!!1ㅠㅠㅠ!!!!!!
