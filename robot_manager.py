@@ -241,36 +241,304 @@ class ROSARobotManager(Node):
     # [신규] follow_waypoints 함수
     def follow_waypoints(self, robot_name: str, path_name: str) -> bool:
         """지정된 웨이포인트 경로를 따라가도록 명령합니다."""
-        if path_name not in self.waypoints:
-            self.log_message(f"❌ 알 수 없는 웨이포인트 경로: {path_name}", "ERROR", is_system=True)
+        try:
+            if path_name not in self.waypoints:
+                self.log_message(f"❌ 알 수 없는 웨이포인트 경로: {path_name}", "ERROR", is_system=True)
+                self.log_message(f"💡 사용 가능한 경로: {list(self.waypoints.keys())}", "INFO", is_system=True)
+                return False
+
+            if robot_name not in self.robots:
+                self.log_message(f"❌ 알 수 없는 로봇: {robot_name}", "ERROR", is_system=True)
+                return False
+
+            robot = self.robots[robot_name]
+            navigator = self.navigators[robot_name]
+            
+            # 네비게이터가 준비되었는지 확인
+            if not navigator:
+                self.log_message(f"❌ {robot_name} 네비게이터가 초기화되지 않았습니다.", "ERROR", is_system=True)
+                return False
+            
+            # 이미 다른 작업을 하고 있다면 중단 후 잠시 대기
+            try:
+                if not navigator.isTaskComplete():
+                    self.log_message(f"⚠️ {robot_name}의 진행 중인 작업을 취소합니다.", "INFO", is_system=True)
+                    navigator.cancelTask()
+                    
+                    # 취소 처리 완료까지 잠시 대기
+                    import time
+                    time.sleep(1.0)
+                    
+                    # 강제로 상태 리셋
+                    self.log_message(f"🔄 {robot_name} navigator 상태 리셋", "INFO", is_system=True)
+                    
+            except Exception as e:
+                self.log_message(f"⚠️ 작업 취소 중 오류 (무시): {e}", "WARNING", is_system=True)
+
+            goal_poses = []
+            for i, point in enumerate(self.waypoints[path_name]):
+                try:
+                    pose = PoseStamped()
+                    pose.header.frame_id = 'map'
+                    pose.header.stamp = self.get_clock().now().to_msg()
+                    pose.pose.position.x = float(point['pose']['position']['x'])
+                    pose.pose.position.y = float(point['pose']['position']['y'])
+                    pose.pose.position.z = float(point['pose']['position'].get('z', 0.0))
+                    
+                    # orientation 처리
+                    orientation = point['pose']['orientation']
+                    pose.pose.orientation.x = float(orientation.get('x', 0.0))
+                    pose.pose.orientation.y = float(orientation.get('y', 0.0))
+                    pose.pose.orientation.z = float(orientation.get('z', 0.0))
+                    pose.pose.orientation.w = float(orientation.get('w', 1.0))
+                    
+                    goal_poses.append(pose)
+                    self.log_message(f"📍 웨이포인트 {i+1}: ({pose.pose.position.x:.2f}, {pose.pose.position.y:.2f})", "INFO", is_system=True)
+                except Exception as e:
+                    self.log_message(f"❌ 웨이포인트 {i+1} 파싱 오류: {e}", "ERROR", is_system=True)
+                    return False
+
+            if not goal_poses:
+                self.log_message(f"❌ 웨이포인트 경로 '{path_name}'에 지점이 없습니다.", "ERROR", is_system=True)
+                return False
+
+            self.log_message(f"▶️ {robot_name}가 경로 '{path_name}' 주행을 시작합니다. ({len(goal_poses)}개 지점)", "SUCCESS", is_system=True)
+            robot.state = RobotState.MOVING
+            
+            # followWaypoints 호출 및 오류 처리
+            try:
+                navigator.followWaypoints(goal_poses)
+                self.log_message(f"✅ {robot_name} waypoint 명령 전송 완료", "SUCCESS", is_system=True)
+                return True
+            except Exception as e:
+                self.log_message(f"❌ {robot_name} waypoint 명령 전송 실패: {e}", "ERROR", is_system=True)
+                robot.state = RobotState.IDLE
+                return False
+                
+        except Exception as e:
+            self.log_message(f"❌ follow_waypoints 전체 오류: {e}", "ERROR", is_system=True)
             return False
 
-        robot = self.robots[robot_name]
-        navigator = self.navigators[robot_name]
-        
-        # 이미 다른 작업을 하고 있다면 중단 (필요 시)
-        if not navigator.isTaskComplete():
-            navigator.cancelTask()
-
-        goal_poses = []
-        for point in self.waypoints[path_name]:
-            pose = PoseStamped()
-            pose.header.frame_id = 'map'
-            pose.header.stamp = self.get_clock().now().to_msg()
-            pose.pose.position.x = float(point['pose']['position']['x'])
-            pose.pose.position.y = float(point['pose']['position']['y'])
-            pose.pose.orientation.w = 1.0
-            goal_poses.append(pose)
-
-        if not goal_poses:
-            self.log_message(f"❌ 웨이포인트 경로 '{path_name}'에 지점이 없습니다.", "ERROR", is_system=True)
+    def plan_path_with_waypoints(self, robot_name: str, destination_name: str) -> bool:
+        """A* path planning using waypoints as intermediate routes"""
+        try:
+            if robot_name not in self.robots:
+                self.log_message(f"❌ 알 수 없는 로봇: {robot_name}", "ERROR", is_system=True)
+                return False
+                
+            # 목적지 찾기
+            destination = None
+            for dest in self.waypoints.get('destinations', []):
+                if dest['name'] == destination_name:
+                    destination = dest
+                    break
+                    
+            if not destination:
+                self.log_message(f"❌ 알 수 없는 목적지: {destination_name}", "ERROR", is_system=True)
+                return False
+            
+            robot = self.robots[robot_name]
+            current_pos = robot.position
+            dest_pos = destination['pose']['position']
+            
+            self.log_message(f"🗺️ {robot_name}: 현재위치 ({current_pos.x:.2f}, {current_pos.y:.2f}) -> {destination_name} ({dest_pos['x']:.2f}, {dest_pos['y']:.2f})", "INFO", is_system=True)
+            
+            # 상행선/하행선 선택 로직
+            highway_path = self._select_highway_path(current_pos, dest_pos)
+            
+            if not highway_path:
+                self.log_message(f"⚠️ 직접 경로로 이동: {destination_name}", "INFO", is_system=True)
+                coordinates = self.location_manager.get_location_coordinates(destination_name)
+                if coordinates:
+                    return self.move_robot_to_coordinates(robot_name, coordinates, destination_name)
+                else:
+                    self.log_message(f"❌ 직접 이동 실패: 알 수 없는 위치 {destination_name}", "ERROR", is_system=True)
+                    return False
+            
+            # A* 경로 생성: 현재위치 -> highway waypoints -> 목적지
+            full_path = self._create_full_path(current_pos, highway_path, dest_pos)
+            
+            if not full_path:
+                self.log_message(f"❌ 경로 생성 실패", "ERROR", is_system=True)
+                return False
+                
+            self.log_message(f"✅ A* 경로 계획 완료: {len(full_path)}개 지점", "SUCCESS", is_system=True)
+            
+            # 경로 실행
+            return self._execute_planned_path(robot_name, full_path, destination_name)
+            
+        except Exception as e:
+            self.log_message(f"❌ path planning 오류: {e}", "ERROR", is_system=True)
             return False
-
-        self.log_message(f"▶️ {robot_name}가 경로 '{path_name}' 주행을 시작합니다.", is_system=True)
-        robot.state = RobotState.MOVING
-        navigator.followWaypoints(goal_poses)
-        
-        return True
+    
+    def _select_highway_path(self, current_pos, dest_pos):
+        """현재 위치와 목적지를 기반으로 상행선/하행선 선택"""
+        try:
+            current_y = current_pos.y
+            dest_y = dest_pos['y']
+            
+            self.log_message(f"🗺️ 경로 선택: 현재 Y={current_y:.2f}, 목적지 Y={dest_y:.2f}", "INFO", is_system=True)
+            
+            # Highway waypoint의 Y 범위 확인
+            # highway_up: -0.8 ~ 0.9
+            # highway_down: -0.8 ~ 0.9  
+            highway_min_y = -0.8
+            highway_max_y = 0.9
+            
+            # 목적지가 highway 범위를 벗어나면 직접 이동
+            if dest_y > highway_max_y + 0.1 or dest_y < highway_min_y - 0.1:
+                self.log_message(f"➡️ 직접 경로 (highway 범위 밖: {dest_y:.2f})", "INFO", is_system=True)
+                return None
+            
+            # 현재 위치가 highway 범위를 벗어나면 직접 이동
+            if current_y > highway_max_y + 0.1 or current_y < highway_min_y - 0.1:
+                self.log_message(f"➡️ 직접 경로 (현재 위치가 highway 범위 밖: {current_y:.2f})", "INFO", is_system=True)
+                return None
+            
+            # Y 좌표 기준으로 상행선/하행선 결정 (임계값 낮춤)
+            y_diff = dest_y - current_y
+            if y_diff > 0.05:  # 위쪽으로 가는 경우 (임계값 0.1 -> 0.05)
+                self.log_message(f"🟢 상행선 경로 선택 (위로 {y_diff:.2f}m)", "SUCCESS", is_system=True)
+                return 'highway_up'
+            elif y_diff < -0.05:  # 아래쪽으로 가는 경우 (임계값 0.1 -> 0.05)
+                self.log_message(f"🔵 하행선 경로 선택 (아래로 {y_diff:.2f}m)", "SUCCESS", is_system=True)
+                return 'highway_down'
+            else:  # 매우 비슷한 Y 좌표라면 X 좌표도 고려
+                current_x = current_pos.x
+                dest_x = dest_pos['x']
+                
+                # X 좌표 차이가 크면 highway 사용
+                x_diff = abs(dest_x - current_x)
+                if x_diff > 0.3:  # X 거리가 0.3m 이상이면 highway 사용
+                    if current_y < 0:  # 현재가 아래쪽이면 상행선
+                        self.log_message(f"🟢 상행선 경로 선택 (X거리 {x_diff:.2f}m, 아래에서 출발)", "SUCCESS", is_system=True)
+                        return 'highway_up'
+                    else:  # 현재가 위쪽이면 하행선
+                        self.log_message(f"🔵 하행선 경로 선택 (X거리 {x_diff:.2f}m, 위에서 출발)", "SUCCESS", is_system=True)
+                        return 'highway_down'
+                
+                self.log_message(f"➡️ 직접 경로 (가까운 거리: Y차이={y_diff:.2f}m, X차이={x_diff:.2f}m)", "INFO", is_system=True)
+                return None
+                
+        except Exception as e:
+            self.log_message(f"❌ highway 선택 오류: {e}", "ERROR", is_system=True)
+            return None
+    
+    def _create_full_path(self, current_pos, highway_name, dest_pos):
+        """전체 경로 생성: 시작점 -> highway waypoints -> 목적지"""
+        try:
+            full_path = []
+            
+            # 1. 현재 위치 추가
+            start_pose = {
+                'pose': {
+                    'position': {'x': current_pos.x, 'y': current_pos.y, 'z': 0.0},
+                    'orientation': {'x': 0.0, 'y': 0.0, 'z': 0.0, 'w': 1.0}
+                }
+            }
+            full_path.append(start_pose)
+            
+            # 2. Highway waypoints 추가
+            highway_points = self.waypoints.get(highway_name, [])
+            
+            # 현재 위치에서 가장 가까운 highway 진입점 찾기
+            if highway_points:
+                closest_idx = self._find_closest_waypoint_index(current_pos, highway_points)
+                
+                if highway_name == 'highway_up':
+                    # 상행선: closest_idx부터 끝까지
+                    selected_points = highway_points[closest_idx:]
+                else:  # highway_down
+                    # 하행선: closest_idx부터 끝까지
+                    selected_points = highway_points[closest_idx:]
+                
+                full_path.extend(selected_points)
+            
+            # 3. 최종 목적지 추가
+            dest_pose = {
+                'pose': {
+                    'position': dest_pos,
+                    'orientation': {'x': 0.0, 'y': 0.0, 'z': 0.0, 'w': 1.0}
+                }
+            }
+            full_path.append(dest_pose)
+            
+            # 로그 출력
+            for i, point in enumerate(full_path):
+                pos = point['pose']['position']
+                self.log_message(f"📍 경로 {i+1}: ({pos['x']:.2f}, {pos['y']:.2f})", "INFO", is_system=True)
+            
+            return full_path
+            
+        except Exception as e:
+            self.log_message(f"❌ 전체 경로 생성 오류: {e}", "ERROR", is_system=True)
+            return []
+    
+    def _find_closest_waypoint_index(self, current_pos, waypoints):
+        """현재 위치에서 가장 가까운 waypoint index 찾기"""
+        try:
+            min_distance = float('inf')
+            closest_idx = 0
+            
+            for i, point in enumerate(waypoints):
+                wp_pos = point['pose']['position']
+                distance = ((current_pos.x - wp_pos['x'])**2 + (current_pos.y - wp_pos['y'])**2)**0.5
+                
+                if distance < min_distance:
+                    min_distance = distance
+                    closest_idx = i
+            
+            self.log_message(f"🎯 가장 가까운 waypoint: index {closest_idx}, 거리 {min_distance:.2f}m", "INFO", is_system=True)
+            return closest_idx
+            
+        except Exception as e:
+            self.log_message(f"❌ closest waypoint 찾기 오류: {e}", "ERROR", is_system=True)
+            return 0
+    
+    def _execute_planned_path(self, robot_name: str, path_points: list, destination_name: str) -> bool:
+        """계획된 경로 실행"""
+        try:
+            robot = self.robots[robot_name]
+            navigator = self.navigators[robot_name]
+            
+            if not navigator:
+                self.log_message(f"❌ {robot_name} 네비게이터 없음", "ERROR", is_system=True)
+                return False
+            
+            # 기존 작업 취소
+            if not navigator.isTaskComplete():
+                navigator.cancelTask()
+            
+            goal_poses = []
+            for i, point in enumerate(path_points):
+                pose = PoseStamped()
+                pose.header.frame_id = 'map'
+                pose.header.stamp = self.get_clock().now().to_msg()
+                
+                pos = point['pose']['position']
+                ori = point['pose']['orientation']
+                
+                pose.pose.position.x = float(pos['x'])
+                pose.pose.position.y = float(pos['y'])
+                pose.pose.position.z = float(pos.get('z', 0.0))
+                
+                pose.pose.orientation.x = float(ori.get('x', 0.0))
+                pose.pose.orientation.y = float(ori.get('y', 0.0))
+                pose.pose.orientation.z = float(ori.get('z', 0.0))
+                pose.pose.orientation.w = float(ori.get('w', 1.0))
+                
+                goal_poses.append(pose)
+            
+            self.log_message(f"🚀 {robot_name} A* 경로 실행 시작: {destination_name}", "SUCCESS", is_system=True)
+            robot.state = RobotState.MOVING
+            robot.task_type = f"이동: {destination_name}"
+            
+            navigator.followWaypoints(goal_poses)
+            return True
+            
+        except Exception as e:
+            self.log_message(f"❌ 경로 실행 오류: {e}", "ERROR", is_system=True)
+            return False
 
     def set_task_processor(self, task_processor):
         """작업 처리기 참조 설정"""
@@ -435,7 +703,13 @@ class ROSARobotManager(Node):
             self.task_processor.confirmation_manager.handle_confirmation_from_ros(msg)
     
     def move_robot_to_location(self, robot_name: str, location: str):
-        """로봇을 지정 위치로 이동"""
+        """로봇을 지정 위치로 이동 (A* path planning 사용)"""
+        # 먼저 A* path planning 시도
+        if self.plan_path_with_waypoints(robot_name, location):
+            return True
+        
+        # A* 실패 시 기존 방식 사용
+        self.log_message(f"⚠️ A* 실패, 기존 방식으로 이동: {location}", "WARNING", is_system=True)
         coordinates = self.location_manager.get_location_coordinates(location)
         if not coordinates:
             self.log_message(f"❌ 알 수 없는 위치: {location}", "ERROR", is_system=True)

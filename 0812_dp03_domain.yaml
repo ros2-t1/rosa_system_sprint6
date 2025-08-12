@@ -1,0 +1,156 @@
+# dp03_only_domain.yaml - DP_03 전용 도메인 브릿지
+
+topics:
+  # ==================== DP_03 TF 리맵 ====================
+  
+  # 로봇의 /tf → 관제의 /DP_03/tf
+  tf:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/tf
+
+  # 로봇의 /tf_static → 관제의 /DP_03/tf_static  
+  tf_static:
+    type: tf2_msgs/msg/TFMessage
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/tf_static
+
+  # ==================== DP_03 상태 토픽들 ====================
+  
+  # 배터리
+  pinky_battery_present:
+    type: std_msgs/msg/Float32
+    from_domain: 13  
+    to_domain: 20
+    remap: DP_03/battery_present 
+
+  # 초기 위치 설정
+  DP_03/initialpose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 20  
+    to_domain: 13  
+
+  # AMCL 위치
+  DP_03/amcl_pose:
+    type: geometry_msgs/msg/PoseWithCovarianceStamped
+    from_domain: 13
+    to_domain: 20
+
+  # 경로 정보
+  DP_03/plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 13
+    to_domain: 20
+    remap: plan
+  
+  DP_03/local_plan:
+    type: 'nav_msgs/msg/Path'
+    from_domain: 13
+    to_domain: 20
+    remap: local_plan
+
+  # 센서 데이터
+  DP_03/odom:
+    type: nav_msgs/msg/Odometry
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/scan:
+    type: sensor_msgs/msg/LaserScan
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/particle_cloud:
+    type: nav2_msgs/msg/ParticleCloud
+    from_domain: 13
+    to_domain: 20
+
+  DP_03/robot_description:
+    type: std_msgs/msg/String
+    from_domain: 13
+    to_domain: 20
+
+  # ==================== 제어 토픽 ====================
+  
+  # 속도 제어
+  DP_03/cmd_vel:
+    type: geometry_msgs/msg/Twist
+    from_domain: 20
+    to_domain: 13
+    remap: cmd_vel
+
+  # 목표 위치
+  DP_03/goal_pose:
+    type: geometry_msgs/msg/PoseStamped
+    from_domain: 20
+    to_domain: 13
+    remap: goal_pose
+
+  # ==================== 맵 공유 ====================
+  
+  # 관제의 맵을 DP_03에게 전송
+  map:
+    type: nav_msgs/msg/OccupancyGrid
+    from_domain: 20
+    to_domain: 13
+
+
+
+  
+  # ==================== 로봇팔 (HANA Arm) 연동 (새 이름으로 수정됨) ====================
+
+  # 서버(20) -> 로봇팔(14): 픽업 요청
+  robot_arm/user_cmd:
+    type: std_msgs/msg/Int32
+    from_domain: 20
+    to_domain: 14
+
+  # 로봇팔(14) -> 서버(20): 배치 완료 응답
+  robot_arm/status:
+    type: std_msgs/msg/String
+    from_domain: 14
+    to_domain: 20
+
+  # DP_03 /waypoints
+  waypoints:
+    type: visualization_msgs/msg/MarkerArray
+    from_domain: 20
+    to_domain: 13
+    remap: DP_03/waypoints
+
+  # DP_03 FollowWaypoints Action Topics (네임스페이스 추가)
+  follow_waypoints/_action/status:
+    type: action_msgs/msg/GoalStatusArray
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/follow_waypoints/_action/status
+
+  follow_waypoints/_action/feedback:
+    type: nav2_msgs/action/FollowWaypoints_FeedbackMessage
+    from_domain: 13
+    to_domain: 20
+    remap: DP_03/follow_waypoints/_action/feedback
+
+# ==================== SERVICES (DP_03 FollowWaypoints 액션) ====================
+services:
+  # 관제(20) DP_03/follow_waypoints -> 로봇(13) follow_waypoints  
+  DP_03/follow_waypoints/_action/send_goal:
+    type: action_msgs/srv/SendGoal
+    from_domain: 20
+    to_domain: 13
+    remap: follow_waypoints/_action/send_goal
+
+  DP_03/follow_waypoints/_action/cancel_goal:
+    type: action_msgs/srv/CancelGoal
+    from_domain: 20
+    to_domain: 13
+    remap: follow_waypoints/_action/cancel_goal
+
+  DP_03/follow_waypoints/_action/get_result:
+    type: action_msgs/srv/GetResult
+    from_domain: 20
+    to_domain: 13
+    remap: follow_waypoints/_action/get_result
+

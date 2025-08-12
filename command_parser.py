@@ -104,6 +104,10 @@ class CommandParser:
                     item = "상자"
                 elif "음식" in cmd:
                     item = "음식"
+                elif "영양제" in cmd:
+                    item = "영양제"
+                elif "도시락" in cmd:
+                    item = "도시락"
                 else:
                     item = "물품"
             else:
@@ -171,7 +175,7 @@ class CommandParser:
         self.task_processor.confirmation_robot = ""
         
         # 큐 처리 강제 실행
-        self.task_processor.process_confirmation_queue()
+        self.task_processor.process_location_queues()
         
         self.log_message("🔄 시스템 새로고침 완료!", is_command=True)
     
